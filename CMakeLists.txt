@@ -11,6 +11,8 @@ set(PGD_SOURCES ${SRC_FOLDER}/main.cpp
 set(CMAKE_CXX_STANDARD 11)
 set(Boost_USE_MULTITHREADED ON)
 
+add_subdirectory(lib/ogdf)
+
 #find_package(Threads)
 find_package(Boost 1.58.0 REQUIRED COMPONENTS system)
 
