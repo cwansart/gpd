@@ -3,3 +3,5 @@ build/*
 *.swp
 .project
 .settings/
+.idea/
+cmake-build-debug
