@@ -1,0 +1,5 @@
+build/*
+.cproject
+*.swp
+.project
+.settings/
