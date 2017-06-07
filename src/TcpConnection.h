@@ -7,22 +7,22 @@
 #include <boost/bind.hpp>
 
 class TcpConnection
-	: public std::enable_shared_from_this<TcpConnection>
+    : public std::enable_shared_from_this<TcpConnection>
 {
-	boost::asio::ip::tcp::socket m_socket;
-	std::string m_message;
+    boost::asio::ip::tcp::socket m_socket;
+    std::string m_message;
 
-	void handleWrite();
+    void handleWrite();
 
 public:
     TcpConnection(boost::asio::io_service &io_service);
 
-	boost::asio::ip::tcp::socket &getSocket()
-	{
-		return m_socket;
-	}
+    boost::asio::ip::tcp::socket &getSocket()
+    {
+        return m_socket;
+    }
 
-	void start();
+    void start();
 };
 
 #endif

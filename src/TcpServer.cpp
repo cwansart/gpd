@@ -8,26 +8,26 @@ using boost::asio::ip::tcp;
 #include <string>
 
 TcpServer::TcpServer(io_service &io_service)
-	: m_acceptor(io_service, tcp::endpoint(tcp::v4(), m_port))
+    : m_acceptor(io_service, tcp::endpoint(tcp::v4(), m_port))
 {
-	startAccept();
+    startAccept();
 }
 
 void TcpServer::startAccept()
 {
     auto newConnection = std::make_shared<TcpConnection>(m_acceptor.get_io_service());
 
-	m_acceptor.async_accept(
-		newConnection->getSocket(),
+    m_acceptor.async_accept(
+        newConnection->getSocket(),
         bind(&TcpServer::handleAccept, this, newConnection, boost::asio::placeholders::error)
-	);
+    );
 }
 
 void TcpServer::handleAccept(std::shared_ptr<TcpConnection> newConnection, const boost::system::error_code &error)
 {
-	if (!error) {
-		newConnection->start();
-	}
+    if (!error) {
+        newConnection->start();
+    }
 
-	startAccept();
+    startAccept();
 }
