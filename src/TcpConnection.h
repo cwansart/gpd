@@ -12,7 +12,8 @@ class TcpConnection
     boost::asio::ip::tcp::socket m_socket;
     std::string m_message;
 
-    void handleWrite();
+
+    void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
 public:
     TcpConnection(boost::asio::io_service &io_service);

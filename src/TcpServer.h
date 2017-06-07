@@ -15,6 +15,7 @@ class TcpServer
 
     void startAccept();
     void handleAccept(std::shared_ptr<TcpConnection> newConnection, const boost::system::error_code &error);
+    void handleRead(std::shared_ptr<TcpConnection> newConnection, const boost::system::error_code &error, std::size_t bytesTransferred);
 
 public:
     TcpServer(boost::asio::io_service &io_service);
