@@ -921,11 +921,8 @@ void PlanRep::writeGML(ostream &os, const OrthoRep &OR, const GridLayout &drawin
 
 	for(node v : G.nodes) {
 		os << "  node [\n";
-
 		os << "    id " << (id[v] = nextId++) << "\n";
-
 		os << "    label \"" << v->index() << "\"\n";
-
 		os << "    graphics [\n";
 		os << "      x " << ((double) drawing.x(v)) << "\n";
 		os << "      y " << ((double) drawing.y(v)) << "\n";
@@ -952,7 +949,6 @@ void PlanRep::writeGML(ostream &os, const OrthoRep &OR, const GridLayout &drawin
 
 		else
 			os << "      fill \"#000000\"\n";
-
 
 		os << "    ]\n"; // graphics
 
