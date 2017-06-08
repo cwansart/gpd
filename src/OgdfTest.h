@@ -14,10 +14,10 @@
 class OgdfTest{
     ogdf::Graph G;
     ogdf::GraphAttributes GA;
-    std::string leftTransitions;
 
     //Helper Methods
-    ogdf::node &getNodeByIndex(int index);
+    ogdf::node *getNodeByIndex(int index);
+    bool transitionAlreadyExists(int iSource, int iTarget);
 
 public:
     OgdfTest(std::string &JSONstrng);
