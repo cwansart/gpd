@@ -43,43 +43,41 @@ void OgdfTest::graphToPlanarRep(){
     GA = GraphAttributes(G);
     GA.addAttributes(GraphAttributes::edgeType);
     GA.addAttributes(GraphAttributes::nodeType);
-    //randomSimpleGraph(G, 6, 14);
 
     BoyerMyrvold BM;
     if (BM.isPlanar(G) && G.numberOfNodes()) {
-        cout << "Graph is planar." << endl;
-
         PlanarStraightLayout PSL;
         PSL.call(GA);
 
-        GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);
-    } else {
-        cout << "Graph is not planar." << endl;
-
+        GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // Delete this later
+    }
+    else {
         PlanarizationLayout PL;
         PL.call(GA);
 
-        GraphIO::write(GA, "ortho.svg", GraphIO::drawSVG);
+        GraphIO::write(GA, "ortho.svg", GraphIO::drawSVG);          // Delete this later
 
         SpringEmbedderGridVariant se;
         se.call(GA);
 
-        GraphIO::write(GA, "straight.svg", GraphIO::drawSVG);
+        GraphIO::write(GA, "straight.svg", GraphIO::drawSVG);        // Delete this later
     }
-
-
-    // We can use GraphAttributes to build the Graph for the Toolbox
-    /*cout << "Graphattributes:" << endl;
-    for (node vG : G.nodes) {
-        cout << "ID:" << vG->index() << ", x:" << GA.x(vG) << ", y:" << GA.y(vG) << endl;
-    }
-    for (edge eG : G.edges) {
-        cout << "ID:" << eG->index() << ", source:" << eG->source() << ", target:" << eG->target() << endl;
-    }*/
 }
 
+// INFO: Mention that we only need the new positions of the states/nodes
+// and the ID of every node. So we can change the position of every
+// node in the toolbox.
 std::string OgdfTest::planarRepToJSON(){
-    return "";
+    int counter = 0;
+    json j;
+    j["states"] = json::array();
+
+    for (node vG : G.nodes) {
+        j["states"][counter] = { { "id", vG->index() }, {"xPos:", GA.x(vG)},  {"yPos:", GA.y(vG)}};
+        counter++;
+    }
+
+    return j.dump();
 }
 
 node *OgdfTest::getNodeByIndex(int index){

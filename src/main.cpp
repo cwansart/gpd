@@ -179,6 +179,7 @@ int main()
 
     OgdfTest ogdf(machineRep);
     ogdf.graphToPlanarRep();
+    std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;
 
 	/*try
 	{
