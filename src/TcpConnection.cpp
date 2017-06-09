@@ -11,38 +11,8 @@ TcpConnection::TcpConnection(boost::asio::io_service &io_service)
 {
 }
 
-void TcpConnection::handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred)
-{
-    if (error) {
-        std::cerr << "An error occured while wiring. Error code: " << error.value() << std::endl
-                  << error.message() << std::endl << std::endl;
-        std::cerr << "bytes transferred while writing: " << bytesTransferred << std::endl << std::endl;
-        return;
-    }
-
-    //std::cerr << "bytes transferred while writing: " << bytesTransferred << std::endl << std::endl;
-}
-
-void TcpConnection::start()
-{
-    /*
-    auto m_message = "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0\r\n"
-            "Content-Type: text/html\r\n"
-            "Access-Control-Allow-Origin: *\r\n"
-            "Connection: Closed\r\n\r\n";
-
-    async_write(
-            m_socket,
-            buffer(m_message),
-            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
-    );
-     */
-}
-
 void TcpConnection::processRequest()
 {
-    std::cout << "process request called" << std::endl;
     m_socket.async_read_some(
             buffer(m_buffer),
             boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
@@ -51,7 +21,6 @@ void TcpConnection::processRequest()
 
 void TcpConnection::handleRead(const boost::system::error_code &error, std::size_t bytesTransferred)
 {
-    std::cout << "handle read called" << std::endl;
     // 89 is cancelled or closed
     if (error && error.value() != 89) {
         std::cerr << "An error occured while reading a request. Error code: " << error.value() << std::endl
@@ -72,31 +41,38 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
             else if (buf.find("POST") == 0) {
                 m_packageType = Type::POST;
             }
+            else if (buf.find("OPTIONS") == 0) {
+                m_packageType = Type::OPTIONS;
+            }
             else {
                 // Not a valid package. Abort!
                 std::cerr << "Received an invalid package. Abort request.";
-                // TODO: find a way to close the connection excplitily.
+                std::cerr << buf << std::endl;
+                m_socket.close();
             }
         }
 
-        if (buf.find("\r\n\r\n") != std::string::npos) {
-            m_headerFound = true;
-        } // Else we could check if buf.size equals the size of m_buffer. If not, the package is invalid.
-
-        m_packageCounter++;
-        if (m_headerFound && m_packageType == Type::POST && buf.find("\r\n")) {
-            std::cout << "handle read p10" << std::endl;
-            m_message << buf;
-            processMessage();
-        }
-        else if (m_headerFound && m_packageType == Type::GET) {
-            handleGetRequest();
+        if (m_packageType == Type::OPTIONS) {
+            handleOptionsRequest();
         }
         else {
-            std::string ty(m_packageType == Type::GET ? "GET" : (m_packageType == Type::POST ? "POST" : "UKWN"));
-            std::cout << "handle read p11: " << (m_headerFound ? "TRUE" : "FALSE") << ", " << ty << " : " << buf << std::endl;
-            m_message << buf;
-            processRequest();
+            if (buf.find("\r\n\r\n") != std::string::npos) {
+                m_headerFound = true;
+            } // Else we could check if buf.size equals the size of m_buffer. If not, the package is invalid.
+
+            m_packageCounter++;
+            if (m_headerFound && m_packageType == Type::POST && buf.find("\r\n")) {
+                m_message << buf;
+                processMessage();
+            }
+            else if (m_headerFound && m_packageType == Type::GET) {
+                handleGetRequest();
+            }
+            else {
+                std::string ty(m_packageType == Type::GET ? "GET" : (m_packageType == Type::POST ? "POST" : "UKWN"));
+                m_message << buf;
+                processRequest();
+            }
         }
     }
     else {
@@ -109,7 +85,12 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
 
 void TcpConnection::processMessage()
 {
+    std::cout << "process message called" << std::endl;
+    std::cout << ">>>>MSG START" << std::endl << m_message.str() << std::endl << "<<<<MSG END" << std::endl << std::endl;
+    // TODO: Now we need to pass this string to the ofgd part of the application
 
+    // Remove this later on...
+    handleGetRequest();
 }
 
 void TcpConnection::handleGetRequest()
@@ -124,11 +105,30 @@ void TcpConnection::handleGetRequest()
     async_write(
             m_socket,
             buffer(message),
-            bind(&TcpConnection::handleGetWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
 }
 
-void TcpConnection::handleGetWrite(const boost::system::error_code &error, std::size_t bytesTransferred)
+void TcpConnection::handleOptionsRequest()
+{
+    const std::string message = "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 0\r\n"
+            "Content-Type: text/html\r\n"
+            "Access-Control-Allow-Methods: OPTIONS, GET, POST\r\n"
+            "Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Connection: close\r\n\r\n";
+    std::cout << "Options answer length: " << message.length() << std::endl;
+    std::array<char, 512> messageArray;
+    std::copy(message.begin(), message.end(), messageArray.data());
+    async_write(
+            m_socket,
+            buffer(message),
+            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+    );
+}
+
+void TcpConnection::handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred)
 {
     if (error) {
         std::cerr << "An error occured while sending answer to get request. Error code: " << error.value() << std::endl

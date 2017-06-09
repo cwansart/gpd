@@ -14,6 +14,7 @@ class TcpConnection
     {
         GET,
         POST,
+        OPTIONS,
         UNKNOWN
     };
 
@@ -22,16 +23,15 @@ class TcpConnection
     std::array<char, 8192> m_buffer;
     bool m_headerFound;
     bool m_readComplete;
-    bool m_isGetRequest;
     int m_packageCounter;
     Type m_packageType;
 
-    void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
 
     void handleGetRequest();
-    void handleGetWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
+    void handleOptionsRequest();
+    void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
 public:
     TcpConnection(boost::asio::io_service &io_service);
@@ -41,8 +41,6 @@ public:
     {
         return m_socket;
     }
-
-    void start();
 };
 
 #endif
