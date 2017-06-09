@@ -16,6 +16,7 @@ TcpServer::TcpServer(io_service &io_service)
 
 void TcpServer::startAccept()
 {
+    std::cout << "start accept called" << std::endl;
     auto newConnection = std::make_shared<TcpConnection>(m_acceptor.get_io_service());
 
     m_acceptor.async_accept(
@@ -26,6 +27,7 @@ void TcpServer::startAccept()
 
 void TcpServer::handleAccept(std::shared_ptr<TcpConnection> clientConnection, const boost::system::error_code &error)
 {
+    std::cout << "handle accept called" << std::endl;
     if (!error) {
         //newConnection->start();
 

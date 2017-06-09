@@ -30,6 +30,9 @@ class TcpConnection
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
 
+    void handleGetRequest();
+    void handleGetWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
+
 public:
     TcpConnection(boost::asio::io_service &io_service);
     void processRequest();

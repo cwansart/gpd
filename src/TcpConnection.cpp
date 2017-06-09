@@ -1,5 +1,6 @@
 #include "TcpConnection.h"
 #include <iostream>
+#include <string>
 
 using boost::bind;
 using boost::asio::async_write;
@@ -41,6 +42,7 @@ void TcpConnection::start()
 
 void TcpConnection::processRequest()
 {
+    std::cout << "process request called" << std::endl;
     m_socket.async_read_some(
             buffer(m_buffer),
             boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
@@ -49,6 +51,7 @@ void TcpConnection::processRequest()
 
 void TcpConnection::handleRead(const boost::system::error_code &error, std::size_t bytesTransferred)
 {
+    std::cout << "handle read called" << std::endl;
     // 89 is cancelled or closed
     if (error && error.value() != 89) {
         std::cerr << "An error occured while reading a request. Error code: " << error.value() << std::endl
@@ -82,10 +85,16 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
 
         m_packageCounter++;
         if (m_headerFound && m_packageType == Type::POST && buf.find("\r\n")) {
+            std::cout << "handle read p10" << std::endl;
             m_message << buf;
             processMessage();
         }
+        else if (m_headerFound && m_packageType == Type::GET) {
+            handleGetRequest();
+        }
         else {
+            std::string ty(m_packageType == Type::GET ? "GET" : (m_packageType == Type::POST ? "POST" : "UKWN"));
+            std::cout << "handle read p11: " << (m_headerFound ? "TRUE" : "FALSE") << ", " << ty << " : " << buf << std::endl;
             m_message << buf;
             processRequest();
         }
@@ -101,4 +110,30 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
 void TcpConnection::processMessage()
 {
 
+}
+
+void TcpConnection::handleGetRequest()
+{
+    const std::string message = "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 4\r\n"
+            "Content-Type: text/html\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Connection: close\r\n\r\npong\r\n";
+    std::array<char, 512> messageArray;
+    std::copy(message.begin(), message.end(), messageArray.data());
+    async_write(
+            m_socket,
+            buffer(message),
+            bind(&TcpConnection::handleGetWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+    );
+}
+
+void TcpConnection::handleGetWrite(const boost::system::error_code &error, std::size_t bytesTransferred)
+{
+    if (error) {
+        std::cerr << "An error occured while sending answer to get request. Error code: " << error.value() << std::endl
+                  << error.message() << std::endl << std::endl;
+        std::cerr << "bytes transferred while writing: " << bytesTransferred << std::endl << std::endl;
+        return;
+    }
 }
