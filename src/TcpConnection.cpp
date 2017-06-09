@@ -24,7 +24,8 @@ void TcpConnection::handleWrite(const boost::system::error_code &error, std::siz
 
 void TcpConnection::start()
 {
-    m_message = "HTTP/1.1 200 OK\r\n"
+    /*
+    auto m_message = "HTTP/1.1 200 OK\r\n"
             "Content-Length: 0\r\n"
             "Content-Type: text/html\r\n"
             "Access-Control-Allow-Origin: *\r\n"
@@ -35,13 +36,14 @@ void TcpConnection::start()
             buffer(m_message),
             bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
+     */
 }
 
-void TcpConnection::processRequest() const
+void TcpConnection::processRequest()
 {
     m_socket.async_read_some(
             buffer(m_buffer),
-            boost::bind(&TcpServer::handleRead, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+            boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
 }
 

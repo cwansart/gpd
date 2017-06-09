@@ -30,11 +30,9 @@ class TcpConnection
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
 
-
-
 public:
     TcpConnection(boost::asio::io_service &io_service);
-    void processRequest() const;
+    void processRequest();
 
     boost::asio::ip::tcp::socket &getSocket()
     {

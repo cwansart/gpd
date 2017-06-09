@@ -29,7 +29,7 @@ void TcpServer::handleAccept(std::shared_ptr<TcpConnection> clientConnection, co
     if (!error) {
         //newConnection->start();
 
-        newConnection->processRequest();
+        clientConnection->processRequest();
     }
 
     startAccept();
