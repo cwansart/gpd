@@ -180,18 +180,19 @@ int main()
     OgdfTest ogdf(machineRep);
     ogdf.graphToPlanarRep();
     std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;
-
-	/*try
-	{
-		io_service io_service;
-		TcpServer server(io_service, [ogdf]() {
-	         // Call the ogdf functions...
-	    });
-		io_service.run();
-	}
-	catch(std::exception &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}*/
-
+    
+    /*
+    try
+    {
+        io_service io_service;
+        TcpServer server(io_service, [ogdf]() {
+             // Call the ogdf functions...
+        });
+        io_service.run();
+    }
+    catch(std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    */
 }
