@@ -1,9 +1,10 @@
 #ifndef __TCP_CONNECTION__
 #define __TCP_CONNECTION__
 
+#include <functional>
+#include <memory>
 #include <string>
 #include <sstream>
-#include <memory>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
@@ -26,6 +27,8 @@ class TcpConnection
     int m_packageCounter;
     Type m_packageType;
 
+    std::function<void()> m_processingCallback;
+
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
 
@@ -34,7 +37,7 @@ class TcpConnection
     void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
 public:
-    TcpConnection(boost::asio::io_service &io_service);
+    TcpConnection(boost::asio::io_service &io_service, std::function<void()> processingCallback);
     void processRequest();
 
     boost::asio::ip::tcp::socket &getSocket()

@@ -6,8 +6,9 @@ using boost::bind;
 using boost::asio::async_write;
 using boost::asio::buffer;
 
-TcpConnection::TcpConnection(boost::asio::io_service &io_service)
-    : m_socket(io_service), m_headerFound(false), m_readComplete(false), m_packageCounter(0), m_packageType(Type::UNKNOWN)
+TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<void()> processingCallback)
+    : m_socket(io_service), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
+      m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback)
 {
 }
 
@@ -90,7 +91,9 @@ void TcpConnection::processMessage()
     const std::string::size_type machineLength = message.length() - (pos + 2);
     const std::string machine = message.substr(pos, machineLength);
 
-    // TODO: Here we have to call the ogdf code
+    // TODO: We may need to change the return value of the callback function or
+    //       add a parameter for another callback which will send the altered machine.
+    m_processingCallback();
 
     // TODO: Send back the altered machine
     const std::string message = "HTTP/1.1 200 OK\r\n"

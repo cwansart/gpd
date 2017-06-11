@@ -184,7 +184,9 @@ int main()
 	/*try
 	{
 		io_service io_service;
-		TcpServer server(io_service);
+		TcpServer server(io_service, [ogdf]() {
+	         // Call the ogdf functions...
+	    });
 		io_service.run();
 	}
 	catch(std::exception &e)

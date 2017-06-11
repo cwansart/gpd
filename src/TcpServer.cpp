@@ -8,8 +8,8 @@ using boost::asio::ip::tcp;
 #include <sstream>
 #include <string>
 
-TcpServer::TcpServer(io_service &io_service)
-    : m_acceptor(io_service, tcp::endpoint(tcp::v4(), m_port))
+TcpServer::TcpServer(io_service &io_service, std::function<void()> processingCallback)
+    : m_acceptor(io_service, tcp::endpoint(tcp::v4(), m_port)), m_processingCallback(processingCallback)
 {
     startAccept();
 }
@@ -17,7 +17,7 @@ TcpServer::TcpServer(io_service &io_service)
 void TcpServer::startAccept()
 {
     std::cout << "start accept called" << std::endl;
-    auto newConnection = std::make_shared<TcpConnection>(m_acceptor.get_io_service());
+    auto newConnection = std::make_shared<TcpConnection>(m_acceptor.get_io_service(), m_processingCallback);
 
     m_acceptor.async_accept(
         newConnection->getSocket(),
