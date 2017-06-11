@@ -85,12 +85,26 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
 
 void TcpConnection::processMessage()
 {
-    std::cout << "process message called" << std::endl;
-    std::cout << ">>>>MSG START" << std::endl << m_message.str() << std::endl << "<<<<MSG END" << std::endl << std::endl;
-    // TODO: Now we need to pass this string to the ofgd part of the application
+    const std::string message = m_message.str();
+    const std::string::size_type pos = message.find("\r\n\r\n");
+    const std::string::size_type machineLength = message.length() - (pos + 2);
+    const std::string machine = message.substr(pos, machineLength);
 
-    // Remove this later on...
-    handleGetRequest();
+    // TODO: Here we have to call the ogdf code
+
+    // TODO: Send back the altered machine
+    const std::string message = "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 4\r\n"
+            "Content-Type: text/html\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Connection: close\r\n\r\npong\r\n";
+    std::array<char, 512> messageArray;
+    std::copy(message.begin(), message.end(), messageArray.data());
+    async_write(
+            m_socket,
+            buffer(message),
+            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+    );
 }
 
 void TcpConnection::handleGetRequest()
