@@ -13,7 +13,7 @@ using namespace nlohmann;
 * @author   laschenk
 * @since    2017-06-08
 */
-OgdfTest::OgdfTest(std::string &JSONstrng) {
+OgdfTest::OgdfTest(std::string &JSONstrng): graphIsPlanar(false) {
     JSONMachineToGraph(JSONstrng);
 }
 
@@ -63,25 +63,31 @@ void OgdfTest::graphToPlanarRep(){
     GA = GraphAttributes(G);
     GA.addAttributes(GraphAttributes::edgeType);
     GA.addAttributes(GraphAttributes::nodeType);
-    //randomSimpleGraph(G, 10, 20);
+    randomSimpleGraph(G, 6, 14);
 
     BoyerMyrvold BM;
     if (BM.isPlanar(G)) {
-        PlanarStraightLayout PSL;
-        PSL.call(GA);
+        graphIsPlanar = true;
+
+        FPPLayout FPPL;
+        FPPL.call(GA);
 
         GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // Delete this later
     }
     else {
-        PlanarizationLayout PL;
-        PL.call(GA);
+        graphIsPlanar = false;
 
-        GraphIO::write(GA, "ortho.svg", GraphIO::drawSVG);          // Delete this later
+        List<edge> delEdges;
+        GC = GraphCopy(G);
+        GA = GraphAttributes(GC);
+        MaximumPlanarSubgraph MPS;
 
-        SpringEmbedderGridVariant se;
-        se.call(GA);
+        MPS.callAndDelete(GC, delEdges);
 
-        GraphIO::write(GA, "straight.svg", GraphIO::drawSVG);        // Delete this later
+        FPPLayout FPPL;
+        FPPL.call(GA);
+
+        GraphIO::write(GA, "maxPlanSubgraphStraight.svg", GraphIO::drawSVG);    // Delete this later
     }
 }
 
@@ -92,18 +98,24 @@ void OgdfTest::graphToPlanarRep(){
 * @since    2017-06-08
 * @return   string, the JSON string
 */
-std::string OgdfTest::planarRepToJSON(){
-    // INFO: Mention that we only need the new positions of the states/nodes
-    // and the ID of every node. So we can change the position of every
-    // node in the toolbox.
-
+std::string OgdfTest::planarRepToJSON() {
     int counter = 0;
     json j;
     j["states"] = json::array();
 
-    for (node vG : G.nodes) {
-        j["states"][counter] = { { "id", vG->index() }, {"xPos:", GA.x(vG)},  {"yPos:", GA.y(vG)}};
-        counter++;
+    // Use the original Graph
+    if (graphIsPlanar){
+        for (node vG : G.nodes) {
+            j["states"][counter] = {{"id",   vG->index()}, {"xPos", GA.x(vG)}, {"yPos", GA.y(vG)}};
+            counter++;
+        }
+    }
+    // Use the copy
+    else{
+        for (node vG : GC.nodes) {
+            j["states"][counter] = {{"id",   vG->index()}, {"xPos", GA.x(vG)}, {"yPos", GA.y(vG)}};
+            counter++;
+        }
     }
     return j.dump();
 }

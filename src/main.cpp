@@ -185,14 +185,13 @@ int main()
     {
         io_service io_service;
         TcpServer server(io_service, [](std::string machine) -> std::string {
-             // Call the ogdf functions...
-            std::cout << machine << std::endl;
-            OgdfTest o(machine);
-            o.graphToPlanarRep();
-            std::cout << "Positions for the planar representation:\n" << o.planarRepToJSON() << std::endl;
-
             std::cout << "Called inside processMessage" << std::endl;
             std::cout << "MACHINE BLUB" << std::endl << machine << std::endl;
+
+             // Call the ogdf functions...
+            OgdfTest o(machine);
+            o.graphToPlanarRep();
+            o.planarRepToJSON(); // Send this string back to the toolbox
 
             return "";
         });
