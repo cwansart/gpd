@@ -13,13 +13,13 @@ class TcpServer
 {
     const unsigned short m_port = 2909;
     boost::asio::ip::tcp::acceptor m_acceptor;
-    std::function<void()> m_processingCallback;
+    std::function<std::string(std::string)> m_processingCallback;
 
     void startAccept();
     void handleAccept(std::shared_ptr<TcpConnection> clientConnection, const boost::system::error_code &error);
 
 public:
-    TcpServer(boost::asio::io_service &io_service, std::function<void()> processingCallback);
+    TcpServer(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback);
 };
 
 #endif

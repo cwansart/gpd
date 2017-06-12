@@ -177,16 +177,24 @@ int main()
             "    ]}";
 
 
-    OgdfTest ogdf(machineRep);
+    /*OgdfTest ogdf(machineRep);
     ogdf.graphToPlanarRep();
-    std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;
+    std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;*/
 
     try
     {
         io_service io_service;
-        TcpServer server(io_service, [ogdf]() {
+        TcpServer server(io_service, [](std::string machine) -> std::string {
              // Call the ogdf functions...
+            std::cout << machine << std::endl;
+            OgdfTest o(machine);
+            o.graphToPlanarRep();
+            std::cout << "Positions for the planar representation:\n" << o.planarRepToJSON() << std::endl;
+
             std::cout << "Called inside processMessage" << std::endl;
+            std::cout << "MACHINE BLUB" << std::endl << machine << std::endl;
+
+            return "";
         });
         io_service.run();
     }

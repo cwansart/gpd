@@ -14,7 +14,7 @@ using namespace nlohmann;
 * @since    2017-06-08
 */
 OgdfTest::OgdfTest(std::string &JSONstrng) {
-    //JSONMachineToGraph(JSONstrng);
+    JSONMachineToGraph(JSONstrng);
 }
 
 /**
@@ -63,7 +63,7 @@ void OgdfTest::graphToPlanarRep(){
     GA = GraphAttributes(G);
     GA.addAttributes(GraphAttributes::edgeType);
     GA.addAttributes(GraphAttributes::nodeType);
-    randomSimpleGraph(G, 10, 20);
+    //randomSimpleGraph(G, 10, 20);
 
     BoyerMyrvold BM;
     if (BM.isPlanar(G)) {

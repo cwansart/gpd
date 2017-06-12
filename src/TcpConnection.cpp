@@ -6,7 +6,7 @@ using boost::bind;
 using boost::asio::async_write;
 using boost::asio::buffer;
 
-TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<void()> processingCallback)
+TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback)
     : m_socket(io_service), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
       m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback)
 {
@@ -93,15 +93,18 @@ void TcpConnection::processMessage()
 
     // TODO: We may need to change the return value of the callback function or
     //       add a parameter for another callback which will send the altered machine.
-    m_processingCallback();
+    const std::string newMachineJson(m_processingCallback(machine));
 
     // TODO: Send back the altered machine
-    const std::string responseMessage = "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 4\r\n"
-            "Content-Type: text/html\r\n"
-            "Access-Control-Allow-Origin: *\r\n"
-            "Connection: close\r\n\r\npong\r\n";
-    std::array<char, 512> messageArray;
+    std::stringstream response;
+    response << "HTTP/1.1 200 OK\r\n"
+             << "Content-Length: " << newMachineJson.length() << "\r\n"
+             << "Content-Type: text/html\r\n"
+             << "Access-Control-Allow-Origin: *\r\n"
+             << "Connection: close\r\n\r\n"
+             << newMachineJson << "\r\n";
+    const std::string responseMessage(response.str());
+    std::array<char, 32768> messageArray;
     std::copy(responseMessage.begin(), responseMessage.end(), messageArray.data());
     async_write(
             m_socket,

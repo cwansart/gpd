@@ -27,7 +27,7 @@ class TcpConnection
     int m_packageCounter;
     Type m_packageType;
 
-    std::function<void()> m_processingCallback;
+    std::function<std::string(std::string)> m_processingCallback;
 
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
@@ -37,7 +37,7 @@ class TcpConnection
     void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
 public:
-    TcpConnection(boost::asio::io_service &io_service, std::function<void()> processingCallback);
+    TcpConnection(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback);
     void processRequest();
 
     boost::asio::ip::tcp::socket &getSocket()

@@ -8,7 +8,7 @@ using boost::asio::ip::tcp;
 #include <sstream>
 #include <string>
 
-TcpServer::TcpServer(io_service &io_service, std::function<void()> processingCallback)
+TcpServer::TcpServer(io_service &io_service, std::function<std::string(std::string)> processingCallback)
     : m_acceptor(io_service, tcp::endpoint(tcp::v4(), m_port)), m_processingCallback(processingCallback)
 {
     startAccept();
