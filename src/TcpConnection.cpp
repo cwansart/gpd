@@ -96,16 +96,16 @@ void TcpConnection::processMessage()
     m_processingCallback();
 
     // TODO: Send back the altered machine
-    const std::string message = "HTTP/1.1 200 OK\r\n"
+    const std::string responseMessage = "HTTP/1.1 200 OK\r\n"
             "Content-Length: 4\r\n"
             "Content-Type: text/html\r\n"
             "Access-Control-Allow-Origin: *\r\n"
             "Connection: close\r\n\r\npong\r\n";
     std::array<char, 512> messageArray;
-    std::copy(message.begin(), message.end(), messageArray.data());
+    std::copy(responseMessage.begin(), responseMessage.end(), messageArray.data());
     async_write(
             m_socket,
-            buffer(message),
+            buffer(responseMessage),
             bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
 }

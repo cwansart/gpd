@@ -180,13 +180,13 @@ int main()
     OgdfTest ogdf(machineRep);
     ogdf.graphToPlanarRep();
     std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;
-    
-    /*
+
     try
     {
         io_service io_service;
         TcpServer server(io_service, [ogdf]() {
              // Call the ogdf functions...
+            std::cout << "Called inside processMessage" << std::endl;
         });
         io_service.run();
     }
@@ -194,5 +194,4 @@ int main()
     {
         std::cerr << e.what() << std::endl;
     }
-    */
 }
