@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 
+using std::cout;
+using std::endl;
 using std::string;
 
 using boost::bind;
@@ -32,7 +34,7 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
         return;
     }
 
-    std::string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
+    string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
 
     if (buf.size() > 0) {
         processPackage(buf, bytesTransferred);
@@ -79,7 +81,7 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
         }
     }
     else {
-        handlePostRequest();
+        handlePostRequest(buf, bytesTransferred);
     }
 }
 
@@ -111,32 +113,41 @@ void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size
     // Check if only the header was received...
     if ((buf.length() - 4) == m_headerSize) {
         // if so we need to read again but m_transferredTotal remains 0
-        processRequest();
     }
     else {
         // we need to subtract 4 because we don't want to count \r\n\r\n
         m_transferredTotal += bytesTransferred - m_headerSize - 4;
 
+        splitHeaderAndBody(buf);
+
         if ((m_transferredTotal + 2) >= m_contentLength) {
             // Need to check if the first read received the header + the whole body.
-            // Work in progress here...
+            processMessage();
+            return;
         }
 
     }
-    // TODO:  Remove later...
-    exit(0);
+    processRequest();
+}
+
+/**
+ * Splits the header and body and saves the body in m_message.
+ *
+ * @param buf the received message
+ */
+void TcpConnection::splitHeaderAndBody(const std::string &buf)
+{
+    const std::string::size_type machineLength = buf.length() - (m_headerSize + 2);
+    m_message << buf.substr((m_headerSize + 4), machineLength);
 }
 
 void TcpConnection::processMessage()
 {
-    const std::string message = m_message.str();
-    const std::string::size_type pos = message.find("\r\n\r\n");
-    const std::string::size_type machineLength = message.length() - (pos + 2);
-    const std::string machine = message.substr(pos, machineLength);
+    const string machine = m_message.str();
 
     // TODO: We may need to change the return value of the callback function or
     //       add a parameter for another callback which will send the altered machine.
-    const std::string newMachineJson(m_processingCallback(machine));
+    const string newMachineJson(m_processingCallback(machine));
 
     // TODO: Send back the altered machine
     std::stringstream response;
@@ -172,9 +183,18 @@ void TcpConnection::handleGetRequest()
     );
 }
 
-void TcpConnection::handlePostRequest()
+void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t bytesTransferred)
 {
+    m_transferredTotal += bytesTransferred;
+    m_message << buf;
 
+    // Check if message ends on \r\n, if so we got everything.
+    if ((m_transferredTotal + 2) >= m_contentLength) {
+        processMessage();
+        return;
+    }
+
+    processRequest();
 }
 
 void TcpConnection::handleOptionsRequest()

@@ -21,7 +21,7 @@ class TcpConnection
 
     boost::asio::ip::tcp::socket m_socket;
     std::stringstream m_message;
-    std::array<char, 8192> m_buffer;
+    std::array<char, 32768> m_buffer;
     bool m_headerFound;
     bool m_readComplete;
     int m_packageCounter;
@@ -37,10 +37,11 @@ class TcpConnection
 
     void extractContentLength(const std::string &buf);
     void extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred);
+    void splitHeaderAndBody(const std::string &buf);
     void processPackage(const std::string &buf, const std::size_t bytesTransferred);
 
     void handleGetRequest();
-    void handlePostRequest();
+    void handlePostRequest(const std::string &buf, const std::size_t bytesTransferred);
     void handleOptionsRequest();
     void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
