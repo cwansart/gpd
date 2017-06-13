@@ -107,17 +107,23 @@ void TcpConnection::extractContentLength(const string &buf)
 void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred)
 {
     m_headerSize = buf.find("\r\n\r\n");
-    std::cout << "m_headerSize: " << m_headerSize << std::endl;
-    std::cout << "buf.length(): " << buf.length() << std::endl;
-    std::cout << "l-hZ:         " << (buf.size()-4) << std::endl;
 
     // Check if only the header was received...
     if ((buf.length() - 4) == m_headerSize) {
         // if so we need to read again but m_transferredTotal remains 0
+        processRequest();
     }
     else {
-        m_transferredTotal += 0; //TDB
+        // we need to subtract 4 because we don't want to count \r\n\r\n
+        m_transferredTotal += bytesTransferred - m_headerSize - 4;
+
+        if ((m_transferredTotal + 2) >= m_contentLength) {
+            // Need to check if the first read received the header + the whole body.
+            // Work in progress here...
+        }
+
     }
+    // TODO:  Remove later...
     exit(0);
 }
 
