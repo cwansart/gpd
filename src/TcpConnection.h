@@ -25,6 +25,9 @@ class TcpConnection
     bool m_headerFound;
     bool m_readComplete;
     int m_packageCounter;
+    size_t m_headerSize;
+    size_t m_transferredTotal;
+    size_t m_contentLength;
     Type m_packageType;
 
     std::function<std::string(std::string)> m_processingCallback;
@@ -32,7 +35,12 @@ class TcpConnection
     void handleRead(const boost::system::error_code &error, std::size_t bytesTransferred);
     void processMessage();
 
+    void extractContentLength(const std::string &buf);
+    void extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred);
+    void processPackage(const std::string &buf, const std::size_t bytesTransferred);
+
     void handleGetRequest();
+    void handlePostRequest();
     void handleOptionsRequest();
     void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
