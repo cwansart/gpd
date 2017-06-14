@@ -63,7 +63,7 @@ void OgdfTest::graphToPlanarRep(){
     GA = GraphAttributes(G);
     GA.addAttributes(GraphAttributes::edgeType);
     GA.addAttributes(GraphAttributes::nodeType);
-    randomSimpleGraph(G, 6, 14);
+    randomSimpleGraph(G, 6, 8);
 
     BoyerMyrvold BM;
     if (BM.isPlanar(G)) {
@@ -72,7 +72,7 @@ void OgdfTest::graphToPlanarRep(){
         FPPLayout FPPL;
         FPPL.call(GA);
 
-        GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // Delete this later
+        GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // TODO: Delete this later
     }
     else {
         graphIsPlanar = false;
@@ -87,7 +87,7 @@ void OgdfTest::graphToPlanarRep(){
         FPPLayout FPPL;
         FPPL.call(GA);
 
-        GraphIO::write(GA, "maxPlanSubgraphStraight.svg", GraphIO::drawSVG);    // Delete this later
+        GraphIO::write(GA, "maxPlanSubgraphStraight.svg", GraphIO::drawSVG);    // TODO: Delete this later
     }
 }
 

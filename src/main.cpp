@@ -177,11 +177,11 @@ int main()
             "    ]}";
 
 
-    /*OgdfTest ogdf(machineRep);
+    OgdfTest ogdf(machineRep);
     ogdf.graphToPlanarRep();
-    std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;*/
+    std::cout << "Positions for the planar representation:\n" << ogdf.planarRepToJSON() << std::endl;
 
-    try
+    /*try
     {
         io_service io_service;
         TcpServer server(io_service, [](std::string machine) -> std::string {
@@ -200,5 +200,5 @@ int main()
     catch(std::exception &e)
     {
         std::cerr << e.what() << std::endl;
-    }
+    }*/
 }
