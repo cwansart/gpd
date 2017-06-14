@@ -1,3 +1,10 @@
+/**
+ * @author Christian Wansart
+ * @since 2017-06-14
+ *
+ * Licensed under the terms of the MIT license. See LICENSE file in project root.
+ */
+
 #ifndef __TCP_SERVER__
 #define __TCP_SERVER__
 
