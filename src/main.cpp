@@ -1,3 +1,11 @@
+/**
+ * @author Christian Wansart
+ * @author Larissa Schenk
+ * @since 2017-06-14
+ *
+ * Licensed under the terms of the MIT license. See LICENSE file in project root.
+ */
+
 #include <iostream>
 #include <boost/asio.hpp>
 #include "TcpServer.h"

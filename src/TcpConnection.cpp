@@ -1,3 +1,11 @@
+/**
+ * @author Christian Wansart
+ * @since 2017-06-14
+ *
+ * Licensed under the terms of the MIT license. See LICENSE file in project root.
+ */
+
+
 #include "TcpConnection.h"
 #include <iostream>
 #include <string>
@@ -16,6 +24,13 @@ TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<
 {
 }
 
+/**
+ * Gets called when a new connection was created from TcpServer. It calls Boost.Asio's async_read_some method to start
+ * reading the receiving bytes.
+ *
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::processRequest()
 {
     m_socket.async_read_some(
@@ -24,6 +39,15 @@ void TcpConnection::processRequest()
     );
 }
 
+/**
+ * Handles a read call from processRequest. Checks for errors, closes the connection if necessary and copies the read
+ * bytes into a string which will be passed to other methods later on.
+ *
+ * @param error error object of Boost.Asio
+ * @param bytesTransferred transferred bytes
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::handleRead(const boost::system::error_code &error, std::size_t bytesTransferred)
 {
     // 89 is cancelled or closed
@@ -53,6 +77,14 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
     }
 }
 
+/**
+ * Processes a package according to its type.
+ *
+ * @param buf the buffer that was read
+ * @param bytesTransferred the bytes that have been transferred
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::processPackage(const std::string &buf, const std::size_t bytesTransferred)
 {
     // We need to differentiate between GET and POST packages, since GET request don't have a body part so we
@@ -93,6 +125,9 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
 
 /**
  * Extracts the header information "Content-Length" and saves it to m_contentLength.
+ *
+ * @author Christian Wansart
+ * @since 2017-06-14
  */
 void TcpConnection::extractContentLength(const string &buf)
 {
@@ -111,6 +146,8 @@ void TcpConnection::extractContentLength(const string &buf)
  *
  * @param buf reference to the buffer string which was read
  * @param bytesTransferred the transferred bytes
+ * @author Christian Wansart
+ * @since 2017-06-14
  */
 void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred)
 {
@@ -140,6 +177,8 @@ void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size
  * Splits the header and body and saves the body in m_message.
  *
  * @param buf the received message
+ * @author Christian Wansart
+ * @since 2017-06-14
  */
 void TcpConnection::splitHeaderAndBody(const std::string &buf)
 {
@@ -147,15 +186,19 @@ void TcpConnection::splitHeaderAndBody(const std::string &buf)
     m_message << buf.substr((m_headerSize + 4), machineLength);
 }
 
+/**
+ * Calls the m_processingCallback function to process the received graph. After that creates a package and sends it back
+ * to the client with the altered graph.
+ *
+ * @author Christian Wansart
+ * @since 2017-06-14
+ * @todo the buffer might be too small perhaps it should be bigger or at least a check should be added to test for its size.
+ */
 void TcpConnection::processMessage()
 {
     const string machine = m_message.str();
-
-    // TODO: We may need to change the return value of the callback function or
-    //       add a parameter for another callback which will send the altered machine.
     const string newMachineJson(m_processingCallback(machine));
 
-    // TODO: Send back the altered machine
     std::stringstream response;
     response << "HTTP/1.1 200 OK\r\n"
              << "Content-Length: " << newMachineJson.length() << "\r\n"
@@ -173,6 +216,12 @@ void TcpConnection::processMessage()
     );
 }
 
+/**
+ * Handles a simple get request which is used for pinging the server. It simply returns a message with "pong" in its body.
+ *
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::handleGetRequest()
 {
     const std::string message = "HTTP/1.1 200 OK\r\n"
@@ -189,6 +238,14 @@ void TcpConnection::handleGetRequest()
     );
 }
 
+/**
+ * Handles post requests if they weren't able to be read in one piece in extractHeaderAndBody.
+ *
+ * @param buf the received message
+ * @param bytesTransferred the transferred bytes
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t bytesTransferred)
 {
     m_transferredTotal += bytesTransferred;
@@ -203,6 +260,12 @@ void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t 
     processRequest();
 }
 
+/**
+ * Handles OPTIONS requests which will be send from the client prior to sending the machine JSON string.
+ *
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::handleOptionsRequest()
 {
     const std::string message = "HTTP/1.1 200 OK\r\n"
@@ -222,6 +285,15 @@ void TcpConnection::handleOptionsRequest()
     );
 }
 
+/**
+ * This method will be called from every method that writes back messages to the client. It only prints an error in the
+ * console if one appears. Otherwise it doesn't do anything.
+ *
+ * @param error a Boost.Asio error object
+ * @param bytesTransferred the transferred bytes
+ * @author Christian Wansart
+ * @since 2017-06-14
+ */
 void TcpConnection::handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred)
 {
     if (error) {

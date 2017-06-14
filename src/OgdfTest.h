@@ -1,3 +1,10 @@
+/**
+ * @author Larissa Schenk
+ * @since 2017-06-14
+ *
+ * Licensed under the terms of the MIT license. See LICENSE file in project root.
+ */
+
 #ifndef __OGDF_TEST__
 #define __OGDF_TEST__
 
