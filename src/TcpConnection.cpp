@@ -28,6 +28,12 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
 {
     // 89 is cancelled or closed
     if (error && error.value() != 89) {
+        // 2 = End of file
+        if (error.value() == 2) {
+            m_socket.close();
+            return;
+        }
+
         std::cerr << "An error occured while reading a request. Error code: " << error.value() << std::endl
                   << error.message() << std::endl << std::endl;
         std::cerr << "Bytes transferred: " << bytesTransferred << std::endl << std::endl;

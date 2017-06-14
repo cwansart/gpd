@@ -63,7 +63,6 @@ void OgdfTest::graphToPlanarRep(){
     GA = GraphAttributes(G);
     GA.addAttributes(GraphAttributes::edgeType);
     GA.addAttributes(GraphAttributes::nodeType);
-    randomSimpleGraph(G, 6, 8);
 
     BoyerMyrvold BM;
     if (BM.isPlanar(G)) {
