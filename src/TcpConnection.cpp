@@ -2,13 +2,17 @@
 #include <iostream>
 #include <string>
 
+using std::cout;
+using std::endl;
+using std::string;
+
 using boost::bind;
 using boost::asio::async_write;
 using boost::asio::buffer;
 
 TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback)
     : m_socket(io_service), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
-      m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback)
+      m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback), m_transferredTotal(0), m_contentLength(0)
 {
 }
 
@@ -30,51 +34,10 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
         return;
     }
 
-    std::string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
+    string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
 
     if (buf.size() > 0) {
-        // We need to differentiate between GET and POST packages, since GET request don't have a body part so we
-        // must skip the second check for \r\n after \r\n\r\n has been read.
-        if (m_packageCounter == 0) {
-            if (buf.find("GET") == 0) {
-                m_packageType = Type::GET;
-            }
-            else if (buf.find("POST") == 0) {
-                m_packageType = Type::POST;
-            }
-            else if (buf.find("OPTIONS") == 0) {
-                m_packageType = Type::OPTIONS;
-            }
-            else {
-                // Not a valid package. Abort!
-                std::cerr << "Received an invalid package. Abort request.";
-                std::cerr << buf << std::endl;
-                m_socket.close();
-            }
-        }
-
-        if (m_packageType == Type::OPTIONS) {
-            handleOptionsRequest();
-        }
-        else {
-            if (buf.find("\r\n\r\n") != std::string::npos) {
-                m_headerFound = true;
-            } // Else we could check if buf.size equals the size of m_buffer. If not, the package is invalid.
-
-            m_packageCounter++;
-            if (m_headerFound && m_packageType == Type::POST && buf.find("\r\n")) {
-                m_message << buf;
-                processMessage();
-            }
-            else if (m_headerFound && m_packageType == Type::GET) {
-                handleGetRequest();
-            }
-            else {
-                std::string ty(m_packageType == Type::GET ? "GET" : (m_packageType == Type::POST ? "POST" : "UKWN"));
-                m_message << buf;
-                processRequest();
-            }
-        }
+        processPackage(buf, bytesTransferred);
     }
     else {
         // TODO: Add some kind of timeout, since async_read_some does not guarantee to read anything. Either a
@@ -84,16 +47,107 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
     }
 }
 
+void TcpConnection::processPackage(const std::string &buf, const std::size_t bytesTransferred)
+{
+    // We need to differentiate between GET and POST packages, since GET request don't have a body part so we
+    // must skip the second check for \r\n after \r\n\r\n has been read.
+    if (m_packageCounter == 0) {
+        if (buf.find("GET") == 0) {
+            m_packageType = Type::GET;
+            handleGetRequest();
+        }
+        else if (buf.find("POST") == 0) {
+            m_packageType = Type::POST;
+            extractContentLength(buf);
+
+            if (m_contentLength <= 0) {
+                std::cerr << "Content-Length is 0, but must be non-zero on a POST request. Closing connection" << std::endl;
+                m_socket.close();
+            }
+
+            extractHeaderAndBody(buf, bytesTransferred);
+            m_packageCounter++;
+            processRequest();
+        }
+        else if (buf.find("OPTIONS") == 0) {
+            m_packageType = Type::OPTIONS;
+            handleOptionsRequest();
+        }
+        else {
+            // Not a valid package. Abort!
+            std::cerr << "Received an invalid package. Abort request.";
+            std::cerr << buf << std::endl;
+            m_socket.close();
+        }
+    }
+    else {
+        handlePostRequest(buf, bytesTransferred);
+    }
+}
+
+/**
+ * Extracts the header information "Content-Length" and saves it to m_contentLength.
+ */
+void TcpConnection::extractContentLength(const string &buf)
+{
+    const string headerName = "Content-Length:";
+    const string::size_type contentLengthPos = buf.find(headerName);
+    const string newBuf = string(buf.begin()+contentLengthPos, buf.end());
+    const string::size_type newLinePos = newBuf.find("\r\n");
+    const string contentLengthStr = newBuf.substr(headerName.length(), (newLinePos - headerName.length()));
+    m_contentLength = std::stoi(contentLengthStr);
+}
+
+/**
+ * Extracts, or rather separates the header and body. If only the header was send, it saves the header size in m_headerSize
+ * and keeps the m_transferredTotal as is. If the body was send, partially or complete, it will be stored in m_message
+ * and the received bytes of the body will be added to m_transferredTotal.
+ *
+ * @param buf reference to the buffer string which was read
+ * @param bytesTransferred the transferred bytes
+ */
+void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred)
+{
+    m_headerSize = buf.find("\r\n\r\n");
+
+    // Check if only the header was received...
+    if ((buf.length() - 4) == m_headerSize) {
+        // if so we need to read again but m_transferredTotal remains 0
+    }
+    else {
+        // we need to subtract 4 because we don't want to count \r\n\r\n
+        m_transferredTotal += bytesTransferred - m_headerSize - 4;
+
+        splitHeaderAndBody(buf);
+
+        if ((m_transferredTotal + 2) >= m_contentLength) {
+            // Need to check if the first read received the header + the whole body.
+            processMessage();
+            return;
+        }
+
+    }
+    processRequest();
+}
+
+/**
+ * Splits the header and body and saves the body in m_message.
+ *
+ * @param buf the received message
+ */
+void TcpConnection::splitHeaderAndBody(const std::string &buf)
+{
+    const std::string::size_type machineLength = buf.length() - (m_headerSize + 2);
+    m_message << buf.substr((m_headerSize + 4), machineLength);
+}
+
 void TcpConnection::processMessage()
 {
-    const std::string message = m_message.str();
-    const std::string::size_type pos = message.find("\r\n\r\n");
-    const std::string::size_type machineLength = message.length() - (pos + 2);
-    const std::string machine = message.substr(pos, machineLength);
+    const string machine = m_message.str();
 
     // TODO: We may need to change the return value of the callback function or
     //       add a parameter for another callback which will send the altered machine.
-    const std::string newMachineJson(m_processingCallback(machine));
+    const string newMachineJson(m_processingCallback(machine));
 
     // TODO: Send back the altered machine
     std::stringstream response;
@@ -127,6 +181,20 @@ void TcpConnection::handleGetRequest()
             buffer(message),
             bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
+}
+
+void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t bytesTransferred)
+{
+    m_transferredTotal += bytesTransferred;
+    m_message << buf;
+
+    // Check if message ends on \r\n, if so we got everything.
+    if ((m_transferredTotal + 2) >= m_contentLength) {
+        processMessage();
+        return;
+    }
+
+    processRequest();
 }
 
 void TcpConnection::handleOptionsRequest()

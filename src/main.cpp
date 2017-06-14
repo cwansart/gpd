@@ -185,15 +185,16 @@ int main()
     {
         io_service io_service;
         TcpServer server(io_service, [](std::string machine) -> std::string {
-            std::cout << "Called inside processMessage" << std::endl;
-            std::cout << "MACHINE BLUB" << std::endl << machine << std::endl;
+            /*
+            std::cout << machine << std::endl;
+            exit(0);
+             */
 
-             // Call the ogdf functions...
+            // Call the ogdf functions...
             OgdfTest o(machine);
             o.graphToPlanarRep();
-            o.planarRepToJSON(); // Send this string back to the toolbox
 
-            return "";
+            return o.planarRepToJSON();
         });
         io_service.run();
     }
