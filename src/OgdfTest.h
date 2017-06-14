@@ -8,7 +8,7 @@
 #include <ogdf/planarity/MaximumPlanarSubgraph.h>
 #include <ogdf/basic/GraphCopy.h>
 #include <ogdf/planarlayout/FPPLayout.h>
-
+#include <ogdf/planarlayout/PlanarStraightLayout.h>
 
 class OgdfTest{
     ogdf::Graph G;

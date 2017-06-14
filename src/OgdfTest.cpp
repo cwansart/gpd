@@ -68,8 +68,8 @@ void OgdfTest::graphToPlanarRep(){
     if (BM.isPlanar(G)) {
         graphIsPlanar = true;
 
-        FPPLayout FPPL;
-        FPPL.call(GA);
+        PlanarStraightLayout PSL;
+        PSL.call(GA);
 
         GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // TODO: Delete this later
     }
@@ -83,8 +83,8 @@ void OgdfTest::graphToPlanarRep(){
 
         MPS.callAndDelete(GC, delEdges);
 
-        FPPLayout FPPL;
-        FPPL.call(GA);
+        PlanarStraightLayout PSL;
+        PSL.call(GA);
 
         GraphIO::write(GA, "maxPlanSubgraphStraight.svg", GraphIO::drawSVG);    // TODO: Delete this later
     }
