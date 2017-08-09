@@ -14,7 +14,6 @@
 #include <ogdf/module/PlanarityModule.h>
 #include <ogdf/planarity/MaximumPlanarSubgraph.h>
 #include <ogdf/basic/GraphCopy.h>
-#include <ogdf/planarlayout/SchnyderLayout.h>
 #include <ogdf/planarlayout/PlanarStraightLayout.h>
 #include <ogdf/planarlayout/TriconnectedShellingOrder.h>
 

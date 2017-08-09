@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
-project(BoostServer)
+project(GpdServer)
 
 #set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-set(PROGNAME BoostServer)
+set(PROGNAME GdpServer)
 set(SRC_FOLDER ${PROJECT_SOURCE_DIR}/src)
 set(PGD_SOURCES ${SRC_FOLDER}/main.cpp
                 ${SRC_FOLDER}/TcpServer.cpp

@@ -7,7 +7,6 @@
 
 #include "OgdfTest.h"
 
-#include <iostream>
 #include <json.hpp>
 
 using namespace ogdf;
@@ -17,7 +16,7 @@ using namespace nlohmann;
 * Constructor, calls JSONMachineToGraph to convert the machine to an ogdf::Graph
 *
 * @param    JSONstrng, machine as a JSON string
-* @author   laschenk
+* @author   Larissa Schenk
 * @since    2017-06-08
 */
 OgdfTest::OgdfTest(std::string &JSONstrng): graphIsPlanar(false) {
@@ -28,7 +27,7 @@ OgdfTest::OgdfTest(std::string &JSONstrng): graphIsPlanar(false) {
 * Converts the machine to a processable ogdf::Graph (ignores i.e. recursive transitions)
 *
 * @param    JSONstrng, machine as a JSON string
-* @author   laschenk
+* @author   Larissa Schenk
 * @since    2017-06-08
 */
 void OgdfTest::JSONMachineToGraph(std::string &JSONstrng){
@@ -63,7 +62,7 @@ void OgdfTest::JSONMachineToGraph(std::string &JSONstrng){
 /**
 * Proofs if the graph is (not) planar, creates a (mostly) planar layout and new positions for the nodes
 *
-* @author   laschenk
+* @author   Larissa Schenk
 * @since    2017-06-08
 */
 void OgdfTest::graphToPlanarRep(){
@@ -96,7 +95,7 @@ void OgdfTest::graphToPlanarRep(){
 /**
 * Saves the new node-positions in a JSON string, that is send to the toolbox later
 *
-* @author   laschenk
+* @author   Larissa Schenk
 * @since    2017-06-08
 * @return   string, the JSON string
 */
@@ -125,7 +124,7 @@ std::string OgdfTest::planarRepToJSON() {
 /**
  *
  * Helper methods
- * @author laschenk
+ * @author Larissa Schenk
  */
 
 node *OgdfTest::getNodeByIndex(int index){
