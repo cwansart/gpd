@@ -77,8 +77,6 @@ void OgdfTest::graphToPlanarRep(){
 
         PlanarStraightLayout PSL;
         PSL.call(GA);
-
-        GraphIO::write(GA, "planStraight.svg", GraphIO::drawSVG);   // TODO: Delete this later
     }
     else {
         graphIsPlanar = false;
@@ -92,8 +90,6 @@ void OgdfTest::graphToPlanarRep(){
 
         PlanarStraightLayout PSL;
         PSL.call(GA);
-
-        GraphIO::write(GA, "maxPlanSubgraphStraight.svg", GraphIO::drawSVG);    // TODO: Delete this later
     }
 }
 
