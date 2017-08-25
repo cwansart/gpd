@@ -14,6 +14,9 @@
 #include <sstream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/asio/ssl.hpp>
+
+typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 
 class TcpConnection
     : public std::enable_shared_from_this<TcpConnection>
@@ -26,7 +29,8 @@ class TcpConnection
         UNKNOWN
     };
 
-    boost::asio::ip::tcp::socket m_socket;
+    ssl_socket m_socket;
+
     std::stringstream m_message;
     std::array<char, 32768> m_buffer;
     bool m_headerFound;
@@ -36,6 +40,8 @@ class TcpConnection
     size_t m_transferredTotal;
     size_t m_contentLength;
     Type m_packageType;
+
+    void handle_handshake(const boost::system::error_code &error);
 
     std::function<std::string(std::string)> m_processingCallback;
 
@@ -52,13 +58,16 @@ class TcpConnection
     void handleOptionsRequest();
     void handleWrite(const boost::system::error_code &error, std::size_t bytesTransferred);
 
+
+
 public:
-    TcpConnection(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback);
+    TcpConnection(boost::asio::io_service &io_service, boost::asio::ssl::context &context, std::function<std::string(std::string)> processingCallback);
     void processRequest();
 
-    boost::asio::ip::tcp::socket &getSocket()
+    // TODO: should be moved to cpp file.
+    ssl_socket::lowest_layer_type& socket()
     {
-        return m_socket;
+        return m_socket.lowest_layer();
     }
 };
 

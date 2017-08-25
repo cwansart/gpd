@@ -17,8 +17,8 @@ using boost::bind;
 using boost::asio::async_write;
 using boost::asio::buffer;
 
-TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback)
-    : m_socket(io_service), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
+TcpConnection::TcpConnection(boost::asio::io_service &io_service, boost::asio::ssl::context &context, std::function<std::string(std::string)> processingCallback)
+    : m_socket(io_service, context), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
       m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback), m_transferredTotal(0), m_contentLength(0)
 {
 }
@@ -32,10 +32,10 @@ TcpConnection::TcpConnection(boost::asio::io_service &io_service, std::function<
  */
 void TcpConnection::processRequest()
 {
-    m_socket.async_read_some(
-            buffer(m_buffer),
-            boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
-    );
+    m_socket.async_handshake(boost::asio::ssl::stream_base::server,
+                             boost::bind(&TcpConnection::handle_handshake, this,
+                                         boost::asio::placeholders::error));
+
 }
 
 /**
@@ -53,7 +53,7 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
     if (error && error.value() != 89) {
         // 2 = End of file
         if (error.value() == 2) {
-            m_socket.close();
+            m_socket.shutdown();
             return;
         }
 
@@ -99,7 +99,7 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
 
             if (m_contentLength <= 0) {
                 std::cerr << "Content-Length is 0, but must be non-zero on a POST request. Closing connection" << std::endl;
-                m_socket.close();
+                m_socket.shutdown();
             }
 
             extractHeaderAndBody(buf, bytesTransferred);
@@ -114,7 +114,7 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
             // Not a valid package. Abort!
             std::cerr << "Received an invalid package. Abort request.";
             std::cerr << buf << std::endl;
-            m_socket.close();
+            m_socket.shutdown();
         }
     }
     else {
@@ -300,5 +300,20 @@ void TcpConnection::handleWrite(const boost::system::error_code &error, std::siz
                   << error.message() << std::endl << std::endl;
         std::cerr << "bytes transferred while writing: " << bytesTransferred << std::endl << std::endl;
         return;
+    }
+}
+
+void TcpConnection::handle_handshake(const boost::system::error_code &error)
+{
+    if (!error) {
+        m_socket.async_read_some(
+                buffer(m_buffer),
+                boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred)
+        );
+    }
+    else {
+        std::cerr << "Ssl handshake failed... Aborting" << std::endl;
+        delete this;
     }
 }

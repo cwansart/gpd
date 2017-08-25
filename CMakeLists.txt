@@ -3,7 +3,7 @@ project(GpdServer)
 
 #set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-set(PROGNAME GdpServer)
+set(PROGNAME GpdServer)
 set(SRC_FOLDER ${PROJECT_SOURCE_DIR}/src)
 set(PGD_SOURCES ${SRC_FOLDER}/main.cpp
                 ${SRC_FOLDER}/TcpServer.cpp
@@ -19,7 +19,13 @@ add_subdirectory(lib/ogdf)
 find_package(Boost 1.58.0 REQUIRED COMPONENTS system)
 find_package (Threads)
 
+if (APPLE)
+    SET(OPENSSL_ROOT_DIR /usr/local/opt/openssl/)
+endif (APPLE)
+find_package(OpenSSL)
+
 include_directories(${Boost_INCLUDE_DIRS}
+                    ${OPENSSL_INCLUDE_DIR}
                     lib/ogdf/include
                     lib/jsonparser/include
                     ${CMAKE_BINARY_DIR}/include
@@ -27,6 +33,7 @@ include_directories(${Boost_INCLUDE_DIRS}
 
 add_executable(${PROGNAME} ${PGD_SOURCES})
 target_link_libraries(${PROGNAME} ${Boost_LIBRARIES}
+                                  ${OPENSSL_LIBRARIES}
                                     OGDF
                                     COIN
                                     ${CMAKE_THREAD_LIBS_INIT}

@@ -13,12 +13,23 @@
 
 using boost::asio::io_service;
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc != 3) {
+        std::cerr << "GpdServer requires at least one parameter. For example:" << std::endl
+                  << argv[0] << " /etc/ssl/myPemFile.pem" << std::endl
+                  << argv[0] << " /etc/ssl/myPemFile.pem pemFilePassword" << std::endl;
+        exit(1);
+    }
+
+    std::string pemFile, pemPassword;
+    pemFile = argv[1];
+    pemPassword = argv[2];
+
     try
     {
         io_service io_service;
-        TcpServer server(io_service, [](std::string machine) -> std::string {
+        TcpServer server(io_service, pemFile, pemPassword, [](std::string machine) -> std::string {
 
             // Call the ogdf functions...
             OgdfTest o(machine);

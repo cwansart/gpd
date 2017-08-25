@@ -13,20 +13,25 @@
 #include <iostream>
 #include <memory>
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 #include "TcpConnection.h"
 
 class TcpServer
 {
     const unsigned short m_port = 2909;
+    const std::string m_pemFile;
+    const std::string m_pemPassword;
     boost::asio::ip::tcp::acceptor m_acceptor;
+    boost::asio::ssl::context m_context;
     std::function<std::string(std::string)> m_processingCallback;
 
     void startAccept();
     void handleAccept(std::shared_ptr<TcpConnection> clientConnection, const boost::system::error_code &error);
+    std::string get_password() const;
 
 public:
-    TcpServer(boost::asio::io_service &io_service, std::function<std::string(std::string)> processingCallback);
+    TcpServer(boost::asio::io_service &io_service, std::string pemFile, std::string pemPassword, std::function<std::string(std::string)> processingCallback);
 };
 
 #endif
