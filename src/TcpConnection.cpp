@@ -17,9 +17,17 @@ using boost::bind;
 using boost::asio::async_write;
 using boost::asio::buffer;
 
-TcpConnection::TcpConnection(boost::asio::io_service &io_service, boost::asio::ssl::context &context, std::function<std::string(std::string)> processingCallback)
-    : m_socket(io_service, context), m_headerFound(false), m_readComplete(false), m_packageCounter(0),
-      m_packageType(Type::UNKNOWN), m_processingCallback(processingCallback), m_transferredTotal(0), m_contentLength(0)
+TcpConnection::TcpConnection(boost::asio::io_service &io_service,
+                             boost::asio::ssl::context &context,
+                             std::function<std::string(std::string)> processingCallback)
+    : m_socket(io_service, context),
+      m_headerFound(false),
+      m_readComplete(false),
+      m_packageCounter(0),
+      m_packageType(Type::UNKNOWN),
+      m_processingCallback(processingCallback),
+      m_transferredTotal(0),
+      m_contentLength(0)
 {
 }
 
@@ -33,9 +41,33 @@ TcpConnection::TcpConnection(boost::asio::io_service &io_service, boost::asio::s
 void TcpConnection::processRequest()
 {
     m_socket.async_handshake(boost::asio::ssl::stream_base::server,
-                             boost::bind(&TcpConnection::handle_handshake, this,
+                             boost::bind(&TcpConnection::handle_handshake,
+                                         shared_from_this(),
                                          boost::asio::placeholders::error));
 
+}
+
+/**
+ * Handles the SSL handshake.
+ * 
+ * @author Christian Wansart
+ * @since 2017-08-25
+ */
+void TcpConnection::handle_handshake(const boost::system::error_code &error)
+{
+    if (!error) {
+        m_socket.async_read_some(
+                buffer(m_buffer),
+                boost::bind(&TcpConnection::handleRead,
+                            shared_from_this(),
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred)
+        );
+    }
+    else {
+        std::cerr << "SSL handshake failed... Aborting" << std::endl;
+        delete this;
+    }
 }
 
 /**
@@ -233,7 +265,10 @@ void TcpConnection::handleGetRequest()
     async_write(
             m_socket,
             buffer(message),
-            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+            bind(&TcpConnection::handleWrite,
+                 shared_from_this(),
+                 boost::asio::placeholders::error,
+                 boost::asio::placeholders::bytes_transferred)
     );
 }
 
@@ -280,7 +315,10 @@ void TcpConnection::handleOptionsRequest()
     async_write(
             m_socket,
             buffer(message),
-            bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
+            bind(&TcpConnection::handleWrite,
+                 shared_from_this(),
+                 boost::asio::placeholders::error,
+                 boost::asio::placeholders::bytes_transferred)
     );
 }
 
@@ -300,20 +338,5 @@ void TcpConnection::handleWrite(const boost::system::error_code &error, std::siz
                   << error.message() << std::endl << std::endl;
         std::cerr << "bytes transferred while writing: " << bytesTransferred << std::endl << std::endl;
         return;
-    }
-}
-
-void TcpConnection::handle_handshake(const boost::system::error_code &error)
-{
-    if (!error) {
-        m_socket.async_read_some(
-                buffer(m_buffer),
-                boost::bind(&TcpConnection::handleRead, shared_from_this(), boost::asio::placeholders::error,
-                            boost::asio::placeholders::bytes_transferred)
-        );
-    }
-    else {
-        std::cerr << "Ssl handshake failed... Aborting" << std::endl;
-        delete this;
     }
 }
