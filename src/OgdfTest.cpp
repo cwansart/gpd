@@ -42,18 +42,18 @@ void OgdfTest::JSONMachineToGraph(std::string &JSONstrng){
     // Save the transitions as edges
     json edges = j["transitions"];
     for (auto &edge: edges) {
-
         int iSource = edge["from"];
         int iTarget = edge["to"];
-
+        
         // TwoWay Transitions
         if(edge["type"] == 2){
-            if(!transitionAlreadyExists(iTarget, iSource))
-                G.newEdge(*getNodeByIndex(iSource), *getNodeByIndex(iTarget));
+            if(!transitionAlreadyExists(iTarget, iSource)) {
+                G.newEdge(getNodeByIndex(iSource), getNodeByIndex(iTarget));
+            }
         }
         // OneWay Transitions
         else if(edge["type"] == 0){
-            G.newEdge(*getNodeByIndex(iSource), *getNodeByIndex(iTarget));
+            G.newEdge(getNodeByIndex(iSource), getNodeByIndex(iTarget));
         }
         // Recursive Transisitons are ignored ..
     }
@@ -127,15 +127,14 @@ std::string OgdfTest::planarRepToJSON() {
  * @author Larissa Schenk
  */
 
-node *OgdfTest::getNodeByIndex(int index){
-    node *n = NULL;
+node OgdfTest::getNodeByIndex(int index){
     for (node vG : G.nodes) {
         if(vG->index() == index){
-            n = &vG;
-            return n;
+            return vG;
         }
     }
-    return NULL;
+    node n;
+    return n;
 }
 
 bool OgdfTest::transitionAlreadyExists(int iSource, int iTarget){

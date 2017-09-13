@@ -65,8 +65,7 @@ void TcpConnection::handle_handshake(const boost::system::error_code &error)
         );
     }
     else {
-        std::cerr << "SSL handshake failed... Aborting" << std::endl;
-        delete this;
+        std::cerr << "SSL handshake failed... Aborting" << std::endl << error.message() << std::endl;
     }
 }
 
@@ -103,7 +102,6 @@ void TcpConnection::handleRead(const boost::system::error_code &error, std::size
     else {
         // TODO: Add some kind of timeout, since async_read_some does not guarantee to read anything. Either a
         //       timer based or a try based timer is possible.
-        std::cerr << "read empty buffer" << std::endl;
         processRequest();
     }
 }
@@ -128,7 +126,7 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
         else if (buf.find("POST") == 0) {
             m_packageType = Type::POST;
             extractContentLength(buf);
-
+            
             if (m_contentLength <= 0) {
                 std::cerr << "Content-Length is 0, but must be non-zero on a POST request. Closing connection" << std::endl;
                 m_socket.shutdown();
@@ -150,6 +148,7 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
         }
     }
     else {
+        std::cerr << "processPackage3" << std::endl;
         handlePostRequest(buf, bytesTransferred);
     }
 }
@@ -183,7 +182,6 @@ void TcpConnection::extractContentLength(const string &buf)
 void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size_t bytesTransferred)
 {
     m_headerSize = buf.find("\r\n\r\n");
-
     // Check if only the header was received...
     if ((buf.length() - 4) == m_headerSize) {
         // if so we need to read again but m_transferredTotal remains 0
@@ -191,9 +189,7 @@ void TcpConnection::extractHeaderAndBody(const std::string &buf, const std::size
     else {
         // we need to subtract 4 because we don't want to count \r\n\r\n
         m_transferredTotal += bytesTransferred - m_headerSize - 4;
-
         splitHeaderAndBody(buf);
-
         if ((m_transferredTotal + 2) >= m_contentLength) {
             // Need to check if the first read received the header + the whole body.
             processMessage();
@@ -237,12 +233,10 @@ void TcpConnection::processMessage()
              << "Access-Control-Allow-Origin: *\r\n"
              << "Connection: close\r\n\r\n"
              << newMachineJson << "\r\n";
-    const std::string responseMessage(response.str());
-    std::array<char, 32768> messageArray;
-    std::copy(responseMessage.begin(), responseMessage.end(), messageArray.data());
+    m_writeBuffer = response.str();
     async_write(
             m_socket,
-            buffer(responseMessage),
+            buffer(m_writeBuffer),
             bind(&TcpConnection::handleWrite, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
     );
 }
@@ -260,8 +254,6 @@ void TcpConnection::handleGetRequest()
             "Content-Type: text/html\r\n"
             "Access-Control-Allow-Origin: *\r\n"
             "Connection: close\r\n\r\npong\r\n";
-    std::array<char, 512> messageArray;
-    std::copy(message.begin(), message.end(), messageArray.data());
     async_write(
             m_socket,
             buffer(message),
@@ -302,19 +294,16 @@ void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t 
  */
 void TcpConnection::handleOptionsRequest()
 {
-    const std::string message = "HTTP/1.1 200 OK\r\n"
+    m_writeBuffer = "HTTP/1.1 200 OK\r\n"
             "Content-Length: 0\r\n"
             "Content-Type: text/html\r\n"
             "Access-Control-Allow-Methods: OPTIONS, GET, POST\r\n"
             "Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers\r\n"
             "Access-Control-Allow-Origin: *\r\n"
             "Connection: close\r\n\r\n";
-    std::cout << "Options answer length: " << message.length() << std::endl;
-    std::array<char, 512> messageArray;
-    std::copy(message.begin(), message.end(), messageArray.data());
     async_write(
             m_socket,
-            buffer(message),
+            buffer(m_writeBuffer),
             bind(&TcpConnection::handleWrite,
                  shared_from_this(),
                  boost::asio::placeholders::error,

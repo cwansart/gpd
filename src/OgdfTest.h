@@ -24,7 +24,7 @@ class OgdfTest{
     bool graphIsPlanar;
 
     //Helper Methods
-    ogdf::node *getNodeByIndex(int index);
+    ogdf::node getNodeByIndex(int index);
     bool transitionAlreadyExists(int iSource, int iTarget);
 
 public:

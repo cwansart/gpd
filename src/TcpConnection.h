@@ -33,6 +33,7 @@ class TcpConnection
 
     std::stringstream m_message;
     std::array<char, 32768> m_buffer;
+    std::string m_writeBuffer;
     bool m_headerFound;
     bool m_readComplete;
     int m_packageCounter;
