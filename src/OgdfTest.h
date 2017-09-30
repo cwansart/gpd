@@ -22,6 +22,7 @@ class OgdfTest{
     ogdf::GraphCopy GC;
     ogdf::GraphAttributes GA;
     bool graphIsPlanar;
+    bool isValidMachine;
 
     //Helper Methods
     ogdf::node getNodeByIndex(int index);
@@ -33,6 +34,10 @@ public:
     void JSONMachineToGraph(std::string &JSONstrng);
     void graphToPlanarRep();
     std::string planarRepToJSON();
+
+    bool isValid() const {
+        return isValidMachine;
+    }
 };
 
 #endif

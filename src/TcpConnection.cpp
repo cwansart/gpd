@@ -78,33 +78,33 @@ void TcpConnection::handle_handshake(const boost::system::error_code &error)
  * @author Christian Wansart
  * @since 2017-06-14
  */
-void TcpConnection::handleRead(const boost::system::error_code &error, std::size_t bytesTransferred)
-{
-    // 89 is cancelled or closed
-    if (error && error.value() != 89) {
-        // 2 = End of file
-        if (error.value() == 2) {
-            m_socket.shutdown();
-            return;
-        }
-
-        std::cerr << "An error occured while reading a request. Error code: " << error.value() << std::endl
-                  << error.message() << std::endl << std::endl;
-        std::cerr << "Bytes transferred: " << bytesTransferred << std::endl << std::endl;
-        return;
-    }
-
-    string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
-
-    if (buf.size() > 0) {
-        processPackage(buf, bytesTransferred);
-    }
-    else {
-        // TODO: Add some kind of timeout, since async_read_some does not guarantee to read anything. Either a
-        //       timer based or a try based timer is possible.
-        processRequest();
-    }
-}
+ void TcpConnection::handleRead(const boost::system::error_code &error, std::size_t bytesTransferred)
+ {
+     // 89 is cancelled or closed
+     if (error && error.value() != 89) {
+         // 2 = End of file
+         if (error.value() == 2) {
+             m_socket.shutdown();
+             return;
+         }
+ 
+         std::cerr << "An error occured while reading a request. Error code: " << error.value() << std::endl
+                   << error.message() << std::endl << std::endl;
+         std::cerr << "Bytes transferred: " << bytesTransferred << std::endl << std::endl;
+         return;
+     }
+ 
+     string buf(std::begin(m_buffer), std::begin(m_buffer)+bytesTransferred);
+ 
+     if (buf.size() > 0) {
+         processPackage(buf, bytesTransferred);
+     }
+     else {
+         // TODO: Add some kind of timeout, since async_read_some does not guarantee to read anything. Either a
+         //       timer based or a try based timer is possible.
+         processRequest();
+     }
+ }
 
 /**
  * Processes a package according to its type.
@@ -148,7 +148,6 @@ void TcpConnection::processPackage(const std::string &buf, const std::size_t byt
         }
     }
     else {
-        std::cerr << "processPackage3" << std::endl;
         handlePostRequest(buf, bytesTransferred);
     }
 }
@@ -270,7 +269,7 @@ void TcpConnection::handleGetRequest()
  * @param buf the received message
  * @param bytesTransferred the transferred bytes
  * @author Christian Wansart
- * @since 2017-06-14
+ * @sinceop 2017-06-14
  */
 void TcpConnection::handlePostRequest(const std::string &buf, const std::size_t bytesTransferred)
 {

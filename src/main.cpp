@@ -36,9 +36,14 @@ int main(int argc, char **argv)
 
             // Call the ogdf functions...
             OgdfTest o(machine);
-            o.graphToPlanarRep();
-
-            return o.planarRepToJSON();
+            if (o.isValid()) {
+                o.graphToPlanarRep();
+                return o.planarRepToJSON();
+            } 
+            
+            // this will happen if there was an invalid machine, like an empty machine.
+            return machine; 
+            
         });
         io_service.run();
     }

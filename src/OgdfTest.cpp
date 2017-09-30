@@ -19,7 +19,7 @@ using namespace nlohmann;
 * @author   Larissa Schenk
 * @since    2017-06-08
 */
-OgdfTest::OgdfTest(std::string &JSONstrng): graphIsPlanar(false) {
+OgdfTest::OgdfTest(std::string &JSONstrng): graphIsPlanar(false), isValidMachine(true) {
     JSONMachineToGraph(JSONstrng);
 }
 
@@ -35,12 +35,22 @@ void OgdfTest::JSONMachineToGraph(std::string &JSONstrng){
 
     // Save the states as nodes
     json states = j["states"];
+    if (states.size() < 2) {
+        std::cerr << "Received an empty machine (no states or just one). Abort..." << std::endl;
+        isValidMachine = false;
+        return;
+    }
     for (auto &state: states) {
         G.newNode(state["id"]);
     }
 
     // Save the transitions as edges
     json edges = j["transitions"];
+    if (edges.size() == 0) {
+        std::cerr << "Received an empty machine (no transitions). Abort..." << std::endl;
+        isValidMachine = false;
+        return;
+    }
     for (auto &edge: edges) {
         int iSource = edge["from"];
         int iTarget = edge["to"];
